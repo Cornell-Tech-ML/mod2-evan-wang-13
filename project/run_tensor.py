@@ -12,6 +12,48 @@ def RParam(*shape):
     return minitorch.Parameter(r)
 
 # TODO: Implement for Task 2.5.
+class Network(minitorch.Module):
+    def __init__(self, hidden_layers):
+        super().__init__()
+        self.layer1 = Linear(2, hidden_layers)
+        self.layer2 = Linear(hidden_layers, hidden_layers)
+        self.layer3 = Linear(hidden_layers, 1)
+
+    def forward(self, x):
+        h1 = self.layer1.forward(x).relu()
+        h2 = self.layer2.forward(h1).relu()
+        return self.layer3.forward(h2).sigmoid()
+
+class Linear(minitorch.Module):
+    def __init__(self, in_size, out_size):
+        super().__init__()
+        self.weights = RParam(out_size, in_size)
+        self.bias = RParam(out_size)
+
+    def forward(self, x: minitorch.Tensor) -> minitorch.Tensor:
+        print("INPUT SHAPE: ", x.shape)
+        print("WEIGHTS SHAPE: ", self.weights.value.shape)
+        # x is of shape (batch_size, in_size)
+        # weights is of shape (out_size, in_size)
+        # bias is of shape (out_size)
+
+        # Step 1: Create a tensor of shape (batch_size, 1, in_size)
+        # where each batch_size, out_size pair has the input vector
+        input_expanded = x.view(x.shape[0], 1, x.shape[1])
+
+        # Step 2: Create a tensor of shape (1, out_size, in_size)
+        # where each batch_size pair has the weights
+        weights_expanded = self.weights.value.view(1, self.weights.value.shape[0], self.weights.value.shape[1])
+
+        # Step 3: Element-wise multiply and sum along in_size dimension
+        output = (input_expanded * weights_expanded).sum(2)
+
+
+        output = output.view(output.shape[0], output.shape[1])
+        # Step 4: Add bias
+        print("OUTPUT SHAPE: ", output.shape)
+        return output + self.bias.value
+
 
 def default_log_fn(epoch, total_loss, correct, losses):
     print("Epoch ", epoch, " loss ", total_loss, "correct", correct)
