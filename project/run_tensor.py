@@ -5,11 +5,13 @@ Be sure you have minitorch installed in you Virtual Env.
 
 import minitorch
 
+
 # Use this function to make a random parameter in
 # your module.
 def RParam(*shape):
     r = 2 * (minitorch.rand(shape) - 0.5)
     return minitorch.Parameter(r)
+
 
 # TODO: Implement for Task 2.5.
 class Network(minitorch.Module):
@@ -23,6 +25,7 @@ class Network(minitorch.Module):
         h1 = self.layer1.forward(x).relu()
         h2 = self.layer2.forward(h1).relu()
         return self.layer3.forward(h2).sigmoid()
+
 
 class Linear(minitorch.Module):
     def __init__(self, in_size, out_size):
@@ -43,11 +46,12 @@ class Linear(minitorch.Module):
 
         # Step 2: Create a tensor of shape (1, out_size, in_size)
         # where each batch_size pair has the weights
-        weights_expanded = self.weights.value.view(1, self.weights.value.shape[0], self.weights.value.shape[1])
+        weights_expanded = self.weights.value.view(
+            1, self.weights.value.shape[0], self.weights.value.shape[1]
+        )
 
         # Step 3: Element-wise multiply and sum along in_size dimension
         output = (input_expanded * weights_expanded).sum(2)
-
 
         output = output.view(output.shape[0], output.shape[1])
         # Step 4: Add bias
