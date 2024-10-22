@@ -158,7 +158,7 @@ class ReLU(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Tensor:
         """Backward pass for ReLU."""
         (t1,) = ctx.saved_values
-        return grad_output * t1.f.relu_back_zip(t1, grad_output)
+        return grad_output * (t1 > 0)
 
 
 class Log(Function):
@@ -172,7 +172,7 @@ class Log(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Tensor:
         """Backward pass for Log."""
         (t1,) = ctx.saved_values
-        return grad_output * t1.f.log_back_zip(t1, grad_output)
+        return grad_output / t1
 
 
 class Exp(Function):
@@ -206,6 +206,22 @@ class Sum(Function):
         """Backward method for Tensor Sum"""
         (t, dim) = ctx.saved_tensors
 
+        # if dim is None or int(dim.item()) == -1:
+        #     # Create a tensor of ones with the same shape as the input
+        #     return grad_output.expand(t), 0.0
+        # else:
+        #     # Reshape grad_output to have a 1 in the reduced dimension
+        #     shape = list(t.shape)
+        #     dim_item = int(dim.item())
+        #     grad_shape = list(grad_output.shape)
+
+        #     # Insert the reduced dimension back
+        #     grad_shape.insert(dim_item, 1)
+        #     grad_view = grad_output.view(*grad_shape)
+
+        #     # Expand to match input shape
+        #     return grad_view.expand(t), 0.0
+
         if dim is None or int(dim.item()) == -1:
             # Case where summation was over all dimensions (result is scalar)
             # Expand the scalar gradient back to the original shape of the tensor `t`
@@ -221,39 +237,6 @@ class Sum(Function):
             broadcasted_grad = t.expand(reshaped_grad)
 
             return broadcasted_grad, 0.0
-            # grad_shape = list(t.shape)
-            # grad_shape[int(dim.item())] = 1
-            # expand_shape = minitorch.Tensor.make(
-            #     [1.0] * int(operators.prod(t.shape)),
-            #     t.shape,
-            #     backend=grad_output.backend,
-            # )
-            # return grad_output.expand(expand_shape), 0.0
-
-
-# class Sum(Function):
-#     @staticmethod
-#     def forward(ctx: Context, a: Tensor, dim: Tensor) -> Tensor:
-#         ctx.save_for_backward(a, dim)
-#         if dim is None or int(dim.item()) == -1:
-#             return a.f.add_reduce(a.contiguous().view(int(operators.prod(a.shape))), 0)
-#         else:
-#             return a.f.add_reduce(a, int(dim.item()))
-
-#     @staticmethod
-#     def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, float]:
-#         a, dim = ctx.saved_values
-
-#         # If dim is None or -1, we summed over all dimensions
-#         if dim is None or int(dim.item()) == -1:
-#             return grad_output.expand(a), 0.0
-
-#         # Otherwise, we summed over a specific dimension
-#         else:
-#             grad_shape = list(a.shape)
-#             grad_shape[int(dim.item())] = 1
-#             grad_expanded = grad_output.expand(a)
-#             return grad_expanded, 0.0
 
 
 class LT(Function):

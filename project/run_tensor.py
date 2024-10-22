@@ -4,6 +4,7 @@ Be sure you have minitorch installed in you Virtual Env.
 """
 
 import minitorch
+import math
 
 
 # Use this function to make a random parameter in
@@ -30,33 +31,33 @@ class Network(minitorch.Module):
 class Linear(minitorch.Module):
     def __init__(self, in_size, out_size):
         super().__init__()
-        self.weights = RParam(out_size, in_size)
-        self.bias = RParam(out_size)
+        # self.weights = RParam(in_size, out_size)
+        # self.bias = RParam(out_size)
+
+        xavier_scale = (2.0 / (in_size + out_size)) ** 0.5
+        self.weights = minitorch.Parameter(
+            xavier_scale * (2 * minitorch.rand((in_size, out_size)) - 1)
+        )
+        # Initialize bias to zeros
+        self.bias = minitorch.Parameter(minitorch.zeros((out_size,)))
 
     def forward(self, x: minitorch.Tensor) -> minitorch.Tensor:
-        print("INPUT SHAPE: ", x.shape)
-        print("WEIGHTS SHAPE: ", self.weights.value.shape)
-        # x is of shape (batch_size, in_size)
-        # weights is of shape (out_size, in_size)
-        # bias is of shape (out_size)
+        # x shape: (batch_size, in_size)
+        # weights shape: (in_size, out_size)
+        batch_size = x.shape[0]
+        out_size = self.weights.value.shape[1]
 
-        # Step 1: Create a tensor of shape (batch_size, 1, in_size)
-        # where each batch_size, out_size pair has the input vector
-        input_expanded = x.view(x.shape[0], 1, x.shape[1])
+        # reshape x from (batch_size, in_size) to (batch_size, in_size, 1)
+        x_3d = x.view(batch_size, x.shape[1], 1)
 
-        # Step 2: Create a tensor of shape (1, out_size, in_size)
-        # where each batch_size pair has the weights
-        weights_expanded = self.weights.value.view(
-            1, self.weights.value.shape[0], self.weights.value.shape[1]
-        )
+        # reshape weights from (in_size, out_size) to (1, in_size, out_size)
+        w_3d = self.weights.value.view(1, self.weights.value.shape[0], self.weights.value.shape[1])
 
-        # Step 3: Element-wise multiply and sum along in_size dimension
-        output = (input_expanded * weights_expanded).sum(2)
+        # This will broadcast to (batch_size, in_size, out_size)
+        # Then sum along dimension 1 (in_size), then reduce to get (batch_size, out_size)
+        out = x_3d.mul(w_3d).sum(1).view(batch_size, out_size)
 
-        output = output.view(output.shape[0], output.shape[1])
-        # Step 4: Add bias
-        print("OUTPUT SHAPE: ", output.shape)
-        return output + self.bias.value
+        return out + self.bias.value
 
 
 def default_log_fn(epoch, total_loss, correct, losses):
