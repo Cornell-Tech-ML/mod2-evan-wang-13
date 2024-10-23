@@ -37,9 +37,9 @@ class Module:
 
     def eval(self) -> None:
         """Set the `training` flag of this and descendent to false."""
-        self.training = False
         for module in self.modules():
             module.training = False
+        self.training = False
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
         """Collect all the parameters of this module and its descendents.
@@ -49,13 +49,22 @@ class Module:
             The name and `Parameter` of each ancestor parameter.
 
         """
-        params = list(self._parameters.items())
-        for module_name, module in self._modules.items():
-            params.extend(
-                (f"{module_name}.{name}", param)
-                for name, param in module.named_parameters()
-            )
-        return params
+        parameters = {}
+
+        for k, v in self._parameters.items():
+            parameters[k] = v
+
+        for mod_name, m in self._modules.items():
+            for k, v in m.named_parameters():
+                parameters[f"{mod_name}.{k}"] = v
+        return list(parameters.items())
+        # params = list(self._parameters.items())
+        # for module_name, module in self._modules.items():
+        #     params.extend(
+        #         (f"{module_name}.{name}", param)
+        #         for name, param in module.named_parameters()
+        #     )
+        # return params
 
     def parameters(self) -> Sequence[Parameter]:
         """Enumerate over all the parameters of this module and its descendents."""

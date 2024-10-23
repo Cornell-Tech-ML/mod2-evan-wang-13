@@ -96,14 +96,17 @@ def broadcast_index(
     """
     # TODO: Implement for Task 2.2.
 
+    diff = len(big_shape) - len(shape)
     for i in range(len(shape)):
-        # When the dimension size is 1, use 0 as the index (broadcasting)
+        # Map to correct position considering dimension difference
+        big_dim = diff + i
         if shape[i] == 1:
+            # If dimension is 1, broadcast by using index 0
             out_index[i] = 0
         else:
-            # Use modulo to wrap the index within valid bounds
-            out_index[i] = big_index[i] % shape[i]
-    # # Calculate the position in the big shape
+            # Otherwise use the corresponding index from the bigger tensor
+            out_index[i] = big_index[big_dim]
+
     # big_strides = strides_from_shape(big_shape.tolist())
     # position = index_to_position(big_index, array(big_strides))
 

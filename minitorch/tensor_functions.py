@@ -206,22 +206,6 @@ class Sum(Function):
         """Backward method for Tensor Sum"""
         (t, dim) = ctx.saved_tensors
 
-        # if dim is None or int(dim.item()) == -1:
-        #     # Create a tensor of ones with the same shape as the input
-        #     return grad_output.expand(t), 0.0
-        # else:
-        #     # Reshape grad_output to have a 1 in the reduced dimension
-        #     shape = list(t.shape)
-        #     dim_item = int(dim.item())
-        #     grad_shape = list(grad_output.shape)
-
-        #     # Insert the reduced dimension back
-        #     grad_shape.insert(dim_item, 1)
-        #     grad_view = grad_output.view(*grad_shape)
-
-        #     # Expand to match input shape
-        #     return grad_view.expand(t), 0.0
-
         if dim is None or int(dim.item()) == -1:
             # Case where summation was over all dimensions (result is scalar)
             # Expand the scalar gradient back to the original shape of the tensor `t`

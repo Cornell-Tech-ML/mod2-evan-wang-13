@@ -31,31 +31,31 @@ class Network(minitorch.Module):
 class Linear(minitorch.Module):
     def __init__(self, in_size, out_size):
         super().__init__()
-        # self.weights = RParam(in_size, out_size)
-        # self.bias = RParam(out_size)
+        self.weights = RParam(in_size, out_size)
+        self.bias = RParam(out_size)
 
-        xavier_scale = (2.0 / (in_size + out_size)) ** 0.5
-        self.weights = minitorch.Parameter(
-            xavier_scale * (2 * minitorch.rand((in_size, out_size)) - 1)
-        )
-        # Initialize bias to zeros
-        self.bias = minitorch.Parameter(minitorch.zeros((out_size,)))
+        # xavier_scale = (2.0 / (in_size + out_size)) ** 0.5
+        # self.weights = minitorch.Parameter(
+        #     xavier_scale * (2 * minitorch.rand((in_size, out_size)) - 1)
+        # )
+        # # Initialize bias to zeros
+        # self.bias = minitorch.Parameter(minitorch.zeros((out_size,)))
 
     def forward(self, x: minitorch.Tensor) -> minitorch.Tensor:
         # x shape: (batch_size, in_size)
         # weights shape: (in_size, out_size)
-        batch_size = x.shape[0]
+        batch_size, in_size = x.shape[0], x.shape[1]
         out_size = self.weights.value.shape[1]
 
         # reshape x from (batch_size, in_size) to (batch_size, in_size, 1)
-        x_3d = x.view(batch_size, x.shape[1], 1)
+        x_3d = x.view(batch_size, in_size, 1)
 
         # reshape weights from (in_size, out_size) to (1, in_size, out_size)
         w_3d = self.weights.value.view(1, self.weights.value.shape[0], self.weights.value.shape[1])
 
         # This will broadcast to (batch_size, in_size, out_size)
         # Then sum along dimension 1 (in_size), then reduce to get (batch_size, out_size)
-        out = x_3d.mul(w_3d).sum(1).view(batch_size, out_size)
+        out = (x_3d*w_3d).sum(1).view(batch_size, out_size)
 
         return out + self.bias.value
 

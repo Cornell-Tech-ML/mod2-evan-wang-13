@@ -334,27 +334,37 @@ def tensor_zip(
         b_shape: Shape,
         b_strides: Strides,
     ) -> None:
-        # TODO: Implement for Task 2.3.
-
+        # Handle 0-dim tensors
         if len(out_shape) == 0:
             out[0] = fn(a_storage[0], b_storage[0])
             return
 
+        # Calculate total number of elements in output
+        out_size = int(np.prod(out_shape))
+
+        # Initialize index arrays
         out_index = np.zeros(len(out_shape), dtype=np.int32)
         a_index = np.zeros(len(a_shape), dtype=np.int32)
         b_index = np.zeros(len(b_shape), dtype=np.int32)
 
-        for i in range(len(out)):
+        # Process each output position
+        for i in range(out_size):
+            # Convert flat index to multidimensional index
+            to_index(i, out_shape, out_index)
+
+            # Calculate output position
             out_pos = index_to_position(out_index, out_strides)
 
+            # Broadcast indices for both inputs
             broadcast_index(out_index, out_shape, a_shape, a_index)
-            a_pos = index_to_position(a_index, a_strides)
-
             broadcast_index(out_index, out_shape, b_shape, b_index)
-            b_pos = index_to_position(b_index, b_strides)
-            out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
 
-            to_index(i + 1, out_shape, out_index)
+            # Calculate input positions
+            a_pos = index_to_position(a_index, a_strides)
+            b_pos = index_to_position(b_index, b_strides)
+
+            # Apply function to input values and store result
+            out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
 
     return _zip
 
@@ -386,32 +396,36 @@ def tensor_reduce(
         a_strides: Strides,
         reduce_dim: int,
     ) -> None:
-        # TODO: Implement for Task 2.3.
+        out_size = np.prod(out_shape)
 
-        out_index = np.zeros(len(out_shape), dtype=np.int32)
-        a_index = np.zeros(len(a_shape), dtype=np.int32)
+        # Temporary index arrays
+        out_index = np.zeros_like(out_shape)
+        a_index = np.zeros_like(a_shape)
 
-        for i in range(len(out)):
+        for i in range(out_size):
+            # Convert the flat index to a multi-dimensional index for the output
+            to_index(i, out_shape, out_index)
+
+            # Initialize the reduction result with the starting value in out
             out_pos = index_to_position(out_index, out_strides)
+            result = out[out_pos]
 
-            # Initialize a_index from out_index
-            a_index[:] = out_index[:]
-            a_index[reduce_dim] = 0
+            # Iterate along the reduction dimension
+            for j in range(a_shape[reduce_dim]):
+                # Copy the current output index into the input index
+                np.copyto(a_index, out_index)
 
-            # Start with first value
-            reduced = a_storage[index_to_position(a_index, a_strides)]
-
-            # Iterate over the reduction dimension starting from second value
-            for j in range(1, a_shape[reduce_dim]):
+                # Update the input index along the reduction dimension
                 a_index[reduce_dim] = j
+
+                # Convert the input index to a flat position in the input storage
                 a_pos = index_to_position(a_index, a_strides)
-                reduced = fn(reduced, a_storage[a_pos])
 
-            # Store the result
-            out[out_pos] = reduced
+                # Apply the reduction function
+                result = fn(result, a_storage[a_pos])
 
-            # Move to the next output position
-            to_index(i + 1, out_shape, out_index)
+            # Store the reduced result in the output storage
+            out[out_pos] = result
 
     return _reduce
 
