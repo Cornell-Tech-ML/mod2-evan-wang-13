@@ -142,6 +142,7 @@ class Sigmoid(Function):
         (out,) = ctx.saved_values
 
         return grad_output * out * (1 - out)
+        # Previous approach, deprecated
         # one_minus_out = out.f.neg_map(out)
         # one_minus_out = one_minus_out.f.add_zip(one_minus_out, out.f.id_map(out))
         # return grad_output.f.mul_zip(out, one_minus_out)

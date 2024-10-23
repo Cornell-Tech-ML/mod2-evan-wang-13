@@ -102,6 +102,7 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     visit(variable)
     return order
 
+    # My previous approach, deprecated to change to answers for thoroughness
     # visited = set()
     # result = []
 
