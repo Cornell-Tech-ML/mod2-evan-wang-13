@@ -47,9 +47,13 @@ def index_to_position(index: Index, strides: Strides) -> int:
 
     """
     # TODO: Implement for Task 2.1.
-    if len(index) == 0 or len(strides) == 0:
-        return 0
-    return int(np.dot(index, strides))
+    # if len(index) == 0 or len(strides) == 0:
+    #     return 0
+    # return int(np.dot(index, strides))
+    position = 0
+    for ind, stride in zip(index, strides):
+        position += ind * stride
+    return position
 
 
 def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
@@ -66,11 +70,16 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
 
     """
     # TODO: Implement for Task 2.1.
+    # for i in range(len(shape) - 1, -1, -1):
+    #     # Calculate the index for the current dimension
+    #     out_index[i] = ordinal % shape[i]
+    #     # Update the ordinal for the next iteration
+    #     ordinal //= shape[i]
+    cur_ord = ordinal + 0
     for i in range(len(shape) - 1, -1, -1):
-        # Calculate the index for the current dimension
-        out_index[i] = ordinal % shape[i]
-        # Update the ordinal for the next iteration
-        ordinal //= shape[i]
+        sh = shape[i]
+        out_index[i] = int(cur_ord % sh)
+        cur_ord //= sh
 
 
 def broadcast_index(
@@ -97,26 +106,22 @@ def broadcast_index(
     # TODO: Implement for Task 2.2.
 
     diff = len(big_shape) - len(shape)
-    for i in range(len(shape)):
-        # Map to correct position considering dimension difference
-        big_dim = diff + i
-        if shape[i] == 1:
-            # If dimension is 1, broadcast by using index 0
-            out_index[i] = 0
+    for i, s in enumerate(shape):
+        if s > 1:
+            out_index[i] = big_index[i + diff]
         else:
-            # Otherwise use the corresponding index from the bigger tensor
-            out_index[i] = big_index[big_dim]
+            out_index[i] = 0
 
-    # big_strides = strides_from_shape(big_shape.tolist())
-    # position = index_to_position(big_index, array(big_strides))
-
-    # # Convert the position to an index in the smaller shape
-    # to_index(position, shape, out_index)
-
-    # # Adjust for broadcasting
+    # diff = len(big_shape) - len(shape)
     # for i in range(len(shape)):
-    #     if i >= len(big_shape) or big_shape[i] == 1:
+    #     # Map to correct position considering dimension difference
+    #     big_dim = diff + i
+    #     if shape[i] == 1:
+    #         # If dimension is 1, broadcast by using index 0
     #         out_index[i] = 0
+    #     else:
+    #         # Otherwise use the corresponding index from the bigger tensor
+    #         out_index[i] = big_index[big_dim]
 
 
 def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:

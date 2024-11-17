@@ -125,7 +125,12 @@ class Mul(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, Tensor]:
         """Backward pass for Mul."""
         t1, t2 = ctx.saved_values
-        return grad_output * t2, grad_output * t1
+
+        return (
+            grad_output.f.mul_zip(grad_output, t2),
+            grad_output.f.mul_zip(grad_output, t1),
+        )
+        # return grad_output * t2, grad_output * t1
 
 
 class Sigmoid(Function):
@@ -159,7 +164,9 @@ class ReLU(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Tensor:
         """Backward pass for ReLU."""
         (t1,) = ctx.saved_values
-        return grad_output * (t1 > 0)
+
+        return grad_output.f.relu_back_zip(t1, grad_output)
+        # return grad_output * (t1 > 0)
 
 
 class Log(Function):
@@ -173,7 +180,8 @@ class Log(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Tensor:
         """Backward pass for Log."""
         (t1,) = ctx.saved_values
-        return grad_output / t1
+        return grad_output.f.log_back_zip(t1, grad_output)
+        # return grad_output / t1
 
 
 class Exp(Function):
@@ -188,7 +196,8 @@ class Exp(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Tensor:
         """Backward pass for Exp."""
         (out,) = ctx.saved_values
-        return grad_output * out
+        return grad_output.f.mul_zip(out, grad_output)
+        # return grad_output * out
 
 
 class Sum(Function):
